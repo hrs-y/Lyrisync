@@ -1,0 +1,115 @@
+/* ===== 背景：封面色彩的流動色塊（或靜態色塊）＋遮罩＋暗角＋顆粒 ===== */
+
+/* 背景色註冊成顏色型別，換歌時靜態背景也能平順地漸變 */
+@property --mesh-1 {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: rgb(74 64 56);
+}
+
+@property --mesh-2 {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: rgb(52 46 42);
+}
+
+@property --mesh-3 {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: rgb(88 74 62);
+}
+
+@property --mesh-4 {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: rgb(44 40 37);
+}
+
+@property --mesh-5 {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: rgb(64 57 51);
+}
+
+@property --mesh-base {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: rgb(37 32 28);
+}
+
+:root {
+  transition:
+    --mesh-1 1.6s ease,
+    --mesh-2 1.6s ease,
+    --mesh-3 1.6s ease,
+    --mesh-4 1.6s ease,
+    --mesh-5 1.6s ease,
+    --mesh-base 1.6s ease;
+}
+
+.app {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+}
+
+.backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-backdrop);
+  overflow: hidden;
+  background: var(--mesh-base);
+}
+
+/* 低解析度畫布放大鋪滿，內容本來就是柔和的色塊，放大後看不出顆粒 */
+.bg-canvas {
+  position: absolute;
+  inset: -4%;
+  width: 108%;
+  height: 108%;
+  display: none;
+}
+
+.backdrop[data-background="animated"] .bg-canvas {
+  display: block;
+}
+
+/* 低品質（或沒有 WebGL）：同樣的幾種顏色，用 CSS 畫成靜態的色塊 */
+.bg-static {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(62% 72% at 20% 24%, var(--mesh-1) 0%, transparent 72%),
+    radial-gradient(56% 64% at 80% 26%, var(--mesh-2) 0%, transparent 72%),
+    radial-gradient(60% 66% at 72% 80%, var(--mesh-3) 0%, transparent 72%),
+    radial-gradient(52% 58% at 24% 82%, var(--mesh-4) 0%, transparent 72%),
+    radial-gradient(40% 46% at 50% 52%, var(--mesh-5) 0%, transparent 72%),
+    var(--mesh-base);
+}
+
+.backdrop[data-background="animated"] .bg-static {
+  display: none;
+}
+
+/* 依背景亮度壓暗，確保白字一直看得清楚 */
+.bg-scrim {
+  position: absolute;
+  inset: 0;
+  background: rgb(0 0 0 / var(--scrim));
+  transition: background-color 1.4s ease;
+}
+
+.bg-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 120% 90% at 50% 40%, transparent 50%, rgb(0 0 0 / 0.32) 100%);
+}
+
+/* 細微的顆粒感，打破純數位漸層的塑膠感，也能減少暗色漸層的色帶 */
+.bg-grain {
+  position: absolute;
+  inset: 0;
+  opacity: 0.05;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}

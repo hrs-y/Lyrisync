@@ -1,0 +1,224 @@
+/* ===== 設計基準：字型、顏色、圓角、動態、圖層順序 ===== */
+
+/* 歌詞亮度：--sung 是唱過部分的亮度（亮著的行為 1，其他行為 --dim-alpha），切換時有淡入淡出 */
+@property --sung {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0.3;
+}
+
+/* 每個字的填色進度與上浮高度（0～1），由程式逐格寫入 */
+@property --p {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+
+@property --lift {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+
+/* 長音的發光強度、每個字母的隆起（0～1） */
+@property --glow {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+
+@property --bump {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+
+:root {
+  color-scheme: dark;
+
+  /* Windows 11 的 Segoe UI Variable 有顯示與內文兩種光學尺寸；中文接微軟正黑體 */
+  --font-ui: "Segoe UI Variable Text", "Segoe UI", "Microsoft JhengHei UI", "Microsoft JhengHei", "PingFang TC",
+    "Noto Sans TC", system-ui, sans-serif;
+  --font-display: "Segoe UI Variable Display", "Segoe UI", "Microsoft JhengHei UI", "Microsoft JhengHei",
+    "PingFang TC", "Noto Sans TC", system-ui, sans-serif;
+  --font-ja: "Segoe UI Variable Display", "Yu Gothic UI", "Meiryo UI", "Microsoft JhengHei UI", sans-serif;
+  --font-ko: "Segoe UI Variable Display", "Malgun Gothic", "Microsoft JhengHei UI", sans-serif;
+  --font-mono: "Cascadia Mono", Consolas, monospace;
+
+  /* 文字與表面：一律是帶透明度的白，疊在封面色彩上自然融合 */
+  --text: rgb(255 255 255 / 0.96);
+  --text-2: rgb(255 255 255 / 0.68);
+  --text-3: rgb(255 255 255 / 0.46);
+  --hairline: rgb(255 255 255 / 0.1);
+  --fill-1: rgb(255 255 255 / 0.08);
+  --fill-2: rgb(255 255 255 / 0.15);
+  --glass: rgb(30 27 25 / 0.7);
+  --dim-alpha: 0.3;
+
+  /* 依封面調整（background.ts 寫入） */
+  --scrim: 0.3;
+  --art-shadow: 20 18 16;
+  --art-average: 38 34 31;
+  --lyric-scale: 1;
+
+  --radius-s: 8px;
+  --radius-m: 12px;
+  --radius-l: 18px;
+  --radius-xl: 24px;
+
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.36, 0.64, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+
+  --z-backdrop: 0;
+  --z-content: 1;
+  --z-titlebar: 10;
+  --z-drawer: 30;
+  --z-sheet: 40;
+
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 日文介面：假名和漢字優先用日文字型，不然會用中文字型的字形 */
+:root:lang(ja) {
+  --font-ui: "Segoe UI Variable Text", "Segoe UI", "Yu Gothic UI", "Meiryo UI", "Microsoft JhengHei UI", system-ui, sans-serif;
+  --font-display: "Segoe UI Variable Display", "Segoe UI", "Yu Gothic UI", "Meiryo UI", "Microsoft JhengHei UI", system-ui,
+    sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  overflow: hidden;
+  background: #141211;
+  color: var(--text);
+  user-select: none;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+:focus-visible {
+  outline: 2px solid rgb(255 255 255 / 0.85);
+  outline-offset: 2px;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 99px;
+  background: rgb(255 255 255 / 0.18) padding-box;
+}
+
+/* 圓形圖示按鈕（設定、關閉） */
+.icon-button {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-2);
+  transition:
+    background-color 0.2s,
+    color 0.2s,
+    transform 0.25s var(--ease-spring);
+}
+
+.icon-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+.icon-button:hover {
+  background: var(--fill-1);
+  color: var(--text);
+}
+
+.icon-button:active {
+  transform: scale(0.92);
+}
+
+/* 文字按鈕：說明文字旁的小動作 */
+.text-button {
+  padding: 2px 4px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--text);
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: rgb(255 255 255 / 0.35);
+  text-underline-offset: 3px;
+  transition: text-decoration-color 0.2s;
+}
+
+.text-button:hover {
+  text-decoration-color: currentColor;
+}
+
+/* 柔和的實底按鈕 */
+.soft-button {
+  height: 32px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 99px;
+  background: var(--fill-2);
+  font-size: 13px;
+  font-weight: 600;
+  transition:
+    background-color 0.2s,
+    transform 0.25s var(--ease-spring);
+}
+
+.soft-button:hover {
+  background: rgb(255 255 255 / 0.22);
+}
+
+.soft-button:active {
+  transform: scale(0.96);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

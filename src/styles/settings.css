@@ -1,0 +1,872 @@
+/* ===== 設定頁：視窗中央的大面板，左邊分類、右邊內容 ===== */
+
+/* 上方留出標題列的高度：設定開著時一樣能拖曳視窗、縮小或關閉 */
+.settings {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-sheet);
+  display: grid;
+  place-items: center;
+  padding: 52px 24px 24px;
+}
+
+.app:has(.settings.open) .titlebar {
+  z-index: calc(var(--z-sheet) + 1);
+}
+
+.settings-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgb(0 0 0 / 0.36);
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+.settings.open .settings-backdrop {
+  opacity: 1;
+}
+
+/*
+ * 玻璃質感：模糊之外再加 1px 內框和頂部高光，模擬邊緣折射。
+ * 大小跟著視窗縮放（最大化時不會縮在中間一小塊），但不超過可用的空間。
+ */
+.settings-dialog {
+  position: relative;
+  display: grid;
+  grid-template-columns: 212px minmax(0, 1fr);
+  width: min(100%, clamp(720px, 66vw, 1040px));
+  height: min(100%, clamp(520px, 76vh, 760px));
+  overflow: hidden;
+  border-radius: var(--radius-xl);
+  background: rgb(28 26 24 / 0.74);
+  backdrop-filter: blur(44px) saturate(1.6);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.09),
+    inset 0 1px 0 rgb(255 255 255 / 0.07),
+    0 32px 90px rgb(0 0 0 / 0.55);
+  opacity: 0;
+  transform: translateY(12px) scale(0.97);
+  transition:
+    opacity 0.28s ease,
+    transform 0.5s var(--ease-out);
+  user-select: text;
+}
+
+.settings.open .settings-dialog {
+  opacity: 1;
+  transform: none;
+}
+
+/* ----- 左邊：分類 ----- */
+
+.settings-nav {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 22px 12px 16px;
+  background: rgb(0 0 0 / 0.16);
+  box-shadow: inset -1px 0 0 var(--hairline);
+}
+
+.settings-nav h2 {
+  padding: 2px 12px 16px;
+  font: 650 22px var(--font-display);
+  letter-spacing: -0.012em;
+}
+
+.nav-list {
+  --index: 0;
+  position: relative;
+  display: grid;
+  gap: 2px;
+}
+
+/* 選中的分類底下有一塊淺色底，換分類時滑過去 */
+.nav-highlight {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 38px;
+  border-radius: 10px;
+  background: rgb(255 255 255 / 0.13);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.05);
+  transform: translateY(calc(var(--index) * 40px));
+  transition: transform 0.42s var(--ease-spring);
+  pointer-events: none;
+}
+
+.nav-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  height: 38px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-2);
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+  white-space: nowrap;
+  transition:
+    color 0.2s,
+    background-color 0.2s;
+}
+
+.nav-item svg {
+  flex-shrink: 0;
+  width: 19px;
+  height: 19px;
+}
+
+.nav-item:hover {
+  color: var(--text);
+}
+
+.nav-item:not([aria-selected="true"]):hover {
+  background: rgb(255 255 255 / 0.05);
+}
+
+.nav-item[aria-selected="true"] {
+  color: var(--text);
+}
+
+.nav-foot {
+  margin-top: auto;
+  padding: 0 12px;
+  color: var(--text-3);
+  font-size: 12px;
+}
+
+/* ----- 右邊：目前分類的設定 ----- */
+
+.settings-content {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.content-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 16px 6px 36px;
+}
+
+.page-title {
+  font: 650 20px var(--font-display);
+  letter-spacing: -0.01em;
+}
+
+.settings-pages {
+  flex: 1;
+  min-height: 0;
+  padding: 12px 36px 36px;
+  overflow-y: auto;
+}
+
+.settings-page {
+  display: grid;
+  gap: 24px;
+  outline: none;
+}
+
+.settings-group h4 {
+  margin: 0 0 8px 4px;
+  color: var(--text-3);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+
+/* 一組設定放在同一張卡片裡，列與列之間是內縮的細線 */
+.card {
+  border-radius: var(--radius-l);
+  background: rgb(255 255 255 / 0.05);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.035);
+}
+
+.row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 28px;
+  min-height: 58px;
+  padding: 13px 18px;
+}
+
+.row + .row::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 18px;
+  right: 18px;
+  height: 1px;
+  background: var(--hairline);
+}
+
+.row-text {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.row-title {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.row-hint {
+  color: var(--text-3);
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+
+.row-hint:empty {
+  display: none;
+}
+
+.row-control {
+  flex-shrink: 0;
+}
+
+.row-value {
+  color: var(--text-3);
+  font-size: 12.5px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 滑桿、比較寬的選擇器：標題在上，控制項佔滿整列 */
+.row.stacked {
+  display: grid;
+  align-items: stretch;
+  justify-content: stretch;
+  gap: 10px;
+  padding-block: 16px;
+}
+
+.row-head,
+.row-foot {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.row-foot {
+  align-items: center;
+}
+
+.page-note {
+  padding: 0 4px;
+  color: var(--text-3);
+  font-size: 12.5px;
+  line-height: 1.65;
+}
+
+/* ----- 語言卡片：和字體卡片同一種樣式，上面的代表字大一點 ----- */
+
+.language-glyph {
+  display: grid;
+  place-items: center start;
+  height: 34px;
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+/* 「EN」是兩個大寫字母，縮小一點才和「文」「あ」看起來一樣重 */
+.language-option[data-value="en"] .language-glyph {
+  font-size: 21px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+}
+
+.language-glyph svg {
+  width: 26px;
+  height: 26px;
+}
+
+/* 暫時不能調的設定（例如關掉景深模糊時的模糊程度） */
+.row.disabled {
+  opacity: 0.45;
+}
+
+.row.disabled .slider {
+  cursor: default;
+}
+
+/* ----- 字體卡片：每張用那個字體寫範例文字 ----- */
+
+.row:has(> .typefaces) {
+  container-type: inline-size;
+}
+
+.typefaces {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+@container (max-width: 560px) {
+  .typefaces {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.typeface {
+  display: grid;
+  justify-items: start;
+  min-width: 0;
+  padding: 12px 13px 10px;
+  border: 0;
+  border-radius: var(--radius-m);
+  background: rgb(0 0 0 / 0.2);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.06);
+  color: var(--text-2);
+  text-align: left;
+  transition:
+    background-color 0.2s,
+    box-shadow 0.25s,
+    color 0.2s,
+    transform 0.25s var(--ease-spring);
+}
+
+.typeface:hover {
+  background: rgb(255 255 255 / 0.06);
+  color: var(--text);
+}
+
+.typeface:active {
+  transform: scale(0.97);
+}
+
+.typeface[aria-checked="true"] {
+  background: rgb(255 255 255 / 0.13);
+  box-shadow: inset 0 0 0 1.5px rgb(255 255 255 / 0.82);
+  color: var(--text);
+}
+
+.typeface-sample {
+  max-width: 100%;
+  margin-bottom: 8px;
+  overflow: hidden;
+  color: var(--text);
+  font-size: 22px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.typeface-name {
+  font-size: 12.5px;
+  font-weight: 650;
+}
+
+.typeface-detail {
+  color: var(--text-3);
+  font-size: 11.5px;
+}
+
+/* ----- Spotify ----- */
+
+/* 連結狀態的小標籤：前面一個圓點，已連結是綠色、要重新連結是琥珀色 */
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 99px;
+  background: rgb(255 255 255 / 0.08);
+  color: var(--text-2);
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.status-pill::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 0.35);
+}
+
+.status-pill[data-state="connected"] {
+  color: var(--text);
+}
+
+.status-pill[data-state="connected"]::before {
+  background: rgb(120 220 150);
+  box-shadow: 0 0 8px rgb(120 220 150 / 0.6);
+}
+
+.status-pill[data-state="expired"]::before {
+  background: rgb(240 190 90);
+}
+
+.status-pill[data-state="logging-in"]::before {
+  background: rgb(255 255 255 / 0.85);
+  animation: pill-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes pill-pulse {
+  50% {
+    opacity: 0.3;
+  }
+}
+
+.input-row {
+  display: flex;
+  gap: 8px;
+}
+
+.text-input {
+  flex: 1;
+  min-width: 0;
+  height: 36px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 10px;
+  background: rgb(0 0 0 / 0.26);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.08);
+  color: var(--text);
+  font: 500 13px var(--font-mono);
+  letter-spacing: 0.02em;
+  outline: none;
+  user-select: text;
+  transition: box-shadow 0.2s;
+}
+
+.text-input::placeholder {
+  color: var(--text-3);
+  font-family: var(--font-ui);
+  letter-spacing: 0;
+}
+
+.text-input:focus {
+  box-shadow: inset 0 0 0 1.5px rgb(255 255 255 / 0.6);
+}
+
+.text-input:disabled {
+  opacity: 0.5;
+}
+
+/* 主要動作：白底黑字 */
+.soft-button.strong {
+  height: 36px;
+  padding: 0 18px;
+  background: rgb(255 255 255 / 0.9);
+  color: #161413;
+}
+
+.soft-button.strong:hover {
+  background: #fff;
+}
+
+.error-text {
+  color: rgb(255 160 150);
+}
+
+/* 設定步驟：圓形編號，按鈕和網址跟在說明後面 */
+.steps {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  padding: 16px 18px 18px;
+  list-style: none;
+  counter-reset: step;
+}
+
+.steps li {
+  position: relative;
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+  padding-left: 36px;
+  color: var(--text-2);
+  font-size: 13px;
+  line-height: 1.65;
+  counter-increment: step;
+}
+
+.steps li::before {
+  content: counter(step);
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 0.12);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.steps b {
+  color: var(--text);
+  font-weight: 650;
+}
+
+.copy-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.redirect-uri {
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: rgb(0 0 0 / 0.28);
+  color: var(--text);
+  font: 500 12.5px var(--font-mono);
+  user-select: all;
+}
+
+/* ----- 快捷鍵 ----- */
+
+.key-row {
+  min-height: 46px;
+  padding-block: 9px;
+  font-size: 13.5px;
+}
+
+.keys {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+kbd {
+  display: inline-grid;
+  place-items: center;
+  min-width: 28px;
+  height: 26px;
+  padding: 0 8px;
+  border-radius: 7px;
+  background: rgb(255 255 255 / 0.1);
+  box-shadow:
+    inset 0 -1px 0 rgb(0 0 0 / 0.35),
+    inset 0 0 0 1px rgb(255 255 255 / 0.06);
+  color: var(--text);
+  font: 600 12.5px var(--font-ui);
+}
+
+.key-join {
+  color: var(--text-3);
+  font-size: 11px;
+}
+
+.mouse {
+  flex-shrink: 0;
+  color: var(--text-2);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* ----- 關於 ----- */
+
+.about-hero {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 4px 4px 0;
+}
+
+/* 程式圖示（design/logo.svg 的副本）：圖示本身有圓角，外面只加一點陰影讓它浮起來 */
+.about-mark {
+  width: 64px;
+  height: 64px;
+  filter: drop-shadow(0 8px 18px rgb(0 0 0 / 0.45));
+}
+
+.about-name {
+  font: 650 19px var(--font-display);
+}
+
+.about-version {
+  margin-top: 2px;
+  color: var(--text-3);
+  font-size: 12.5px;
+}
+
+.about-text {
+  padding: 0 4px;
+  color: var(--text-2);
+  font-size: 13.5px;
+  line-height: 1.6;
+}
+
+/* 開發者：介紹下方一行，比介紹再淡一點 */
+.about-credit {
+  margin-top: -14px;
+  padding: 0 4px;
+  color: var(--text-3);
+  font-size: 13px;
+}
+
+/* 致謝：兩欄的小格子，名稱在上、用途在下；面板窄的時候改成一欄 */
+.card:has(> .thanks) {
+  container-type: inline-size;
+}
+
+.thanks {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2px 20px;
+  padding: 12px 18px 14px;
+}
+
+@container (max-width: 400px) {
+  .thanks {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.thanks-item {
+  display: grid;
+  gap: 1px;
+  padding: 8px 0;
+}
+
+.thanks-name {
+  font-size: 13.5px;
+  font-weight: 650;
+}
+
+.thanks-what {
+  color: var(--text-3);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* ----- 視窗很窄時：分類改成上方的分頁籤，整個面板佔滿 ----- */
+
+@media (max-width: 760px) {
+  .settings {
+    padding: 50px 10px 10px;
+  }
+
+  .settings-dialog {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    width: 100%;
+    height: 100%;
+  }
+
+  .settings-nav {
+    padding: 10px 10px 8px;
+    box-shadow: inset 0 -1px 0 var(--hairline);
+  }
+
+  .settings-nav h2,
+  .nav-foot,
+  .nav-highlight {
+    display: none;
+  }
+
+  .nav-list {
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .nav-item {
+    flex-shrink: 0;
+    height: 34px;
+    gap: 7px;
+    padding: 0 12px;
+    font-size: 13px;
+  }
+
+  .nav-item svg {
+    width: 17px;
+    height: 17px;
+  }
+
+  .nav-item[aria-selected="true"] {
+    background: rgb(255 255 255 / 0.13);
+  }
+
+  .content-header {
+    padding: 12px 10px 2px 22px;
+  }
+
+  .settings-pages {
+    padding: 10px 14px 24px;
+  }
+
+  .row {
+    padding-inline: 16px;
+  }
+
+  /* 開關、按鈕留在右邊，讓說明文字換行；只有比較寬的選擇器排到文字下方 */
+  .row:has(> .row-control .segmented) {
+    flex-wrap: wrap;
+  }
+
+  .row + .row::before {
+    left: 16px;
+    right: 16px;
+  }
+}
+
+/* ----- 分段選擇器：白色底塊滑到選中的那一格 ----- */
+
+/* 每格一樣寬，寬度跟著最長的那個選項（英文、日文的選項比較長） */
+.segmented {
+  --count: 3;
+  --index: 0;
+  position: relative;
+  display: grid;
+  grid-auto-columns: 1fr;
+  grid-auto-flow: column;
+  width: max-content;
+  min-width: calc(var(--count) * 62px + 6px);
+  padding: 3px;
+  border-radius: 10px;
+  background: rgb(0 0 0 / 0.24);
+}
+
+.segmented.wide {
+  width: 100%;
+}
+
+.segmented button {
+  position: relative;
+  z-index: 1;
+  height: 30px;
+  padding: 0 14px;
+  border: 0;
+  white-space: nowrap;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-2);
+  font-size: 13px;
+  font-weight: 600;
+  transition: color 0.25s;
+}
+
+.segmented button:hover {
+  color: var(--text);
+}
+
+.segmented button[aria-checked="true"] {
+  color: #161413;
+}
+
+.segment-thumb {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 3px;
+  width: calc((100% - 6px) / var(--count));
+  border-radius: 8px;
+  background: rgb(255 255 255 / 0.92);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.28);
+  transform: translateX(calc(var(--index) * 100%));
+  transition: transform 0.38s var(--ease-spring);
+}
+
+/* ----- 開關 ----- */
+
+.switch {
+  position: relative;
+  flex-shrink: 0;
+  width: 46px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 99px;
+  background: rgb(255 255 255 / 0.16);
+  transition: background-color 0.25s;
+}
+
+.switch::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.3);
+  transition:
+    transform 0.35s var(--ease-spring),
+    background-color 0.25s;
+}
+
+.switch[aria-checked="true"] {
+  background: rgb(255 255 255 / 0.88);
+}
+
+.switch[aria-checked="true"]::after {
+  background: #1d1b1a;
+  transform: translateX(18px);
+}
+
+/* 小一號的按鈕（滑桿下方的「歸零」） */
+.soft-button.small {
+  flex-shrink: 0;
+  height: 28px;
+  padding: 0 12px;
+  font-size: 12.5px;
+}
+
+/* ----- 滑桿：--from 到 --to（0～1）之間填色，由程式寫入 ----- */
+
+.slider {
+  --from: 0;
+  --to: 0.5;
+  width: 100%;
+  height: 22px;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.slider::-webkit-slider-runnable-track {
+  height: 5px;
+  border-radius: 99px;
+  background:
+    linear-gradient(
+      90deg,
+      transparent calc(var(--from) * 100%),
+      rgb(255 255 255 / 0.7) calc(var(--from) * 100%) calc(var(--to) * 100%),
+      transparent calc(var(--to) * 100%)
+    ),
+    rgb(255 255 255 / 0.16);
+}
+
+.slider::-webkit-slider-thumb {
+  width: 18px;
+  height: 18px;
+  margin-top: -6.5px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.35);
+  transition: transform 0.25s var(--ease-spring);
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.slider:active::-webkit-slider-thumb {
+  transform: scale(1.12);
+}

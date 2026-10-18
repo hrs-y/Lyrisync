@@ -1,0 +1,116 @@
+/* ===== 無邊框視窗的標題列 ===== */
+
+.titlebar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: var(--z-titlebar);
+  display: flex;
+  align-items: center;
+  height: 44px;
+}
+
+/* 只有這塊空白可以拖曳；按鈕都不在拖曳區裡 */
+.drag-region {
+  flex: 1;
+  align-self: stretch;
+}
+
+.title-actions {
+  display: flex;
+  gap: 4px;
+  padding: 0 6px;
+}
+
+.title-actions .icon-button {
+  opacity: 0.75;
+}
+
+.title-actions .icon-button:hover {
+  opacity: 1;
+}
+
+/* 桌面歌詞開著時，按鈕維持亮起 */
+.title-actions .icon-button[aria-pressed="true"] {
+  background: var(--fill-1);
+  color: var(--text);
+  opacity: 1;
+}
+
+/* 瀏覽器預覽沒有桌面歌詞 */
+.titlebar.web .desktop-lyrics-button {
+  display: none;
+}
+
+.window-controls {
+  display: flex;
+  align-self: stretch;
+}
+
+.titlebar.web .window-controls {
+  display: none;
+}
+
+.window-button {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-2);
+  transition:
+    background-color 0.15s,
+    color 0.15s;
+}
+
+.window-button svg {
+  width: 10px;
+  height: 10px;
+}
+
+.window-button:hover {
+  background: var(--fill-1);
+  color: var(--text);
+}
+
+.window-button:active {
+  background: var(--fill-2);
+}
+
+/* Windows 慣例：關閉按鈕滑過時是紅色 */
+.window-close:hover {
+  background: #c42b1c;
+  color: #fff;
+}
+
+.window-close:active {
+  background: #a92a1d;
+}
+
+/* ===== 全螢幕：沒有視窗按鈕；滑鼠停下來時標題列、工具列、游標都淡出 ===== */
+
+.titlebar {
+  transition: opacity 0.45s ease;
+}
+
+/* 全螢幕時不能拖曳、雙擊最大化（最大化會讓下方出現黑色的一條） */
+html.fullscreen .drag-region {
+  pointer-events: none;
+}
+
+html.fullscreen .window-controls {
+  display: none;
+}
+
+html.fullscreen.idle .titlebar,
+html.fullscreen.idle .lyrics-toolbar {
+  opacity: 0;
+  pointer-events: none;
+}
+
+html.fullscreen.idle,
+html.fullscreen.idle * {
+  cursor: none !important;
+}

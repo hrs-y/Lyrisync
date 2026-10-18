@@ -1,0 +1,546 @@
+/* ===== 播放頁版面：左邊封面與控制、右邊歌詞 ===== */
+
+/*
+ * 整個版面以封面邊長 --cover 為基準：封面跟著視窗的高與寬一起縮放（並保留控制列需要的高度），
+ * 歌詞欄寬度、歌詞字級、歌名與按鈕大小都跟著它。最大化時內容整組變大、置中，兩旁不會空出一大片。
+ */
+.player {
+  --cover: clamp(200px, min(48vh, 34vw, calc(96vh - 330px)), 760px);
+  --gap: clamp(28px, calc(var(--cover) * 0.24), 150px);
+  /* 歌詞欄最寬多少：一般約是封面的兩倍；矮而寬的視窗改用視窗寬度算 */
+  --lyrics-max: min(max(calc(var(--cover) * 1.95), 50vw), 1500px);
+  position: absolute;
+  inset: 44px 0 0;
+  z-index: var(--z-content);
+  display: grid;
+  grid-template-columns: var(--cover) minmax(0, var(--lyrics-max));
+  grid-template-areas: "np lyrics";
+  justify-content: center;
+  column-gap: var(--gap);
+  padding: 4px clamp(24px, 4vw, 88px) clamp(24px, 4vh, 48px);
+}
+
+/* 全螢幕沒有標題列，內容往上填滿 */
+html.fullscreen .player {
+  inset: 0;
+  padding-top: clamp(28px, 6vh, 72px);
+}
+
+.now-playing {
+  grid-area: np;
+  align-self: center;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(16px, calc(var(--cover) * 0.055), 30px);
+  width: 100%;
+  min-width: 0;
+}
+
+/* ----- 封面：播放時正常大小，暫停時縮小，帶一點回彈 ----- */
+
+.cover-frame {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: var(--radius-l);
+  transform: scale(0.86);
+  transition: transform 0.75s var(--ease-spring);
+}
+
+.player.is-playing .cover-frame {
+  transform: scale(1);
+}
+
+.cover {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: inherit;
+  background: rgb(255 255 255 / 0.07);
+  /* 陰影染上封面本身的顏色，比純黑陰影更自然 */
+  box-shadow:
+    0 2px 6px rgb(var(--art-shadow) / 0.3),
+    0 28px 60px -14px rgb(var(--art-shadow) / 0.75);
+  transition:
+    box-shadow 1.2s ease,
+    background-color 0.6s;
+}
+
+/* 1px 的內框，讓封面邊緣在任何背景上都清楚 */
+.cover::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.09);
+  pointer-events: none;
+}
+
+.cover-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: opacity 0.7s ease;
+}
+
+.cover-image.leaving {
+  opacity: 0;
+}
+
+.cover-placeholder {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--text-3);
+  transition: opacity 0.5s;
+}
+
+.cover-placeholder svg {
+  width: 34%;
+  height: 34%;
+}
+
+.cover:not(.empty) .cover-placeholder {
+  opacity: 0;
+}
+
+/* ----- 歌名與歌手 ----- */
+
+/* 歌名與歌手在左，按讚按鈕在右（連結 Spotify 時才出現） */
+.meta {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 10px;
+  min-width: 0;
+}
+
+.meta-text {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.like-button {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-2);
+  transition:
+    background-color 0.2s,
+    color 0.2s,
+    opacity 0.2s;
+}
+
+.like-button:hover {
+  background: var(--fill-1);
+  color: var(--text);
+}
+
+.like-button svg {
+  width: 23px;
+  height: 23px;
+}
+
+.like-button > span {
+  display: grid;
+}
+
+.like-button[aria-pressed="true"] {
+  color: var(--text);
+}
+
+.like-button[aria-pressed="true"] .icon-heart,
+.like-button[aria-pressed="false"] .icon-heart-filled {
+  display: none;
+}
+
+.like-button.busy {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.title {
+  display: -webkit-box;
+  overflow: hidden;
+  font: 650 clamp(18px, calc(var(--cover) * 0.054), 34px) / 1.22 var(--font-display);
+  letter-spacing: -0.012em;
+  text-wrap: balance;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.artist {
+  overflow: hidden;
+  color: var(--text-2);
+  font-size: clamp(13.5px, calc(var(--cover) * 0.034), 21px);
+  font-weight: 500;
+  line-height: 1.35;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* 歌手、專輯名稱可以點：在 Spotify 開啟 */
+.artist-link,
+.album-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 3px;
+  transition:
+    color 0.2s,
+    text-decoration-color 0.2s;
+}
+
+.album-link {
+  color: var(--text-3);
+}
+
+.artist-link:hover,
+.album-link:hover {
+  color: var(--text);
+  text-decoration-color: rgb(255 255 255 / 0.5);
+}
+
+/* 點封面在 Spotify 開啟專輯：滑過時封面微微放大、變亮 */
+.cover-frame[role="button"] {
+  cursor: pointer;
+}
+
+.cover-frame[role="button"] .cover {
+  transition:
+    transform 0.45s var(--ease-out),
+    filter 0.3s;
+}
+
+.cover-frame[role="button"]:hover .cover {
+  filter: brightness(1.06);
+  transform: scale(1.015);
+}
+
+.cover-frame[role="button"]:active .cover {
+  transform: scale(0.99);
+}
+
+/* ----- 進度條、時間、播放控制 ----- */
+
+.transport {
+  display: grid;
+  gap: 8px;
+}
+
+.progress {
+  --progress: 0;
+  position: relative;
+  height: 20px;
+  border-radius: 99px;
+  cursor: pointer;
+  touch-action: none;
+}
+
+.progress-track {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 5px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: rgb(255 255 255 / 0.2);
+  transform: translateY(-50%);
+  transition: height 0.25s var(--ease-out);
+}
+
+.progress-fill {
+  position: absolute;
+  inset: 0;
+  background: rgb(255 255 255 / 0.9);
+  transform: scaleX(var(--progress));
+  transform-origin: left;
+}
+
+.progress:hover .progress-track,
+.progress.dragging .progress-track,
+.progress:focus-visible .progress-track {
+  height: 9px;
+}
+
+.progress-thumb {
+  position: absolute;
+  top: 50%;
+  left: calc(var(--progress) * 100%);
+  width: 15px;
+  height: 15px;
+  margin: -7.5px 0 0 -7.5px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 10px rgb(0 0 0 / 0.35);
+  transform: scale(0);
+  transition: transform 0.3s var(--ease-spring);
+}
+
+.progress:hover .progress-thumb,
+.progress.dragging .progress-thumb,
+.progress:focus-visible .progress-thumb {
+  transform: scale(1);
+}
+
+.progress:focus-visible {
+  outline-offset: 4px;
+}
+
+.times {
+  display: flex;
+  justify-content: space-between;
+  color: var(--text-3);
+  font-size: clamp(11.5px, calc(var(--cover) * 0.026), 15px);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(14px, calc(var(--cover) * 0.07), 44px);
+  margin-top: 4px;
+}
+
+.control {
+  --size: clamp(46px, calc(var(--cover) * 0.13), 72px);
+  display: grid;
+  place-items: center;
+  width: var(--size);
+  height: var(--size);
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text);
+  transition:
+    background-color 0.2s,
+    transform 0.3s var(--ease-spring);
+}
+
+.control svg {
+  width: calc(var(--size) * 0.56);
+  height: calc(var(--size) * 0.56);
+  fill: currentColor;
+}
+
+.control:hover {
+  background: var(--fill-1);
+}
+
+.control:active {
+  transform: scale(0.88);
+}
+
+.control-play {
+  --size: clamp(58px, calc(var(--cover) * 0.17), 96px);
+}
+
+/* 播放／暫停兩個圖示疊在一起，切換時一個縮小淡出、一個放大淡入 */
+.control-play > span {
+  grid-area: 1 / 1;
+  display: grid;
+  transition:
+    opacity 0.25s,
+    transform 0.35s var(--ease-spring);
+}
+
+.control-play svg {
+  width: calc(var(--size) * 0.62);
+  height: calc(var(--size) * 0.62);
+}
+
+.control-play .icon-pause,
+.player.is-playing .control-play .icon-play {
+  opacity: 0;
+  transform: scale(0.5);
+}
+
+.player.is-playing .control-play .icon-pause {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.status-note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 4px 10px;
+  color: var(--text-2);
+  font-size: 13.5px;
+  text-align: center;
+}
+
+/* ----- 歌詞欄 ----- */
+
+.lyrics-panel {
+  grid-area: lyrics;
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+}
+
+#lyrics {
+  position: absolute;
+  inset: 0;
+}
+
+/* 從封面置中切回分欄時，等封面移開一點再讓歌詞從右側淡入，兩者不會疊在一起 */
+.player[data-mode="lyrics"] .lyrics-panel {
+  animation: lyrics-panel-in 0.75s var(--ease-out) 0.18s both;
+}
+
+@keyframes lyrics-panel-in {
+  from {
+    opacity: 0;
+    transform: translateX(28px);
+  }
+}
+
+/* ----- 沒有歌詞：封面置中；沒偵測到 Spotify：等待畫面 ----- */
+
+/* 封面單獨置中時可以再大一點，但要留下歌名、控制列和說明文字的高度 */
+.player[data-mode="cover"],
+.player[data-mode="idle"] {
+  --cover: clamp(200px, min(52vh, 56vw, calc(96vh - 380px)), 640px);
+  grid-template-columns: var(--cover);
+  grid-template-areas: "np";
+}
+
+.player[data-mode="cover"] .lyrics-panel,
+.player[data-mode="idle"] .lyrics-panel {
+  display: none;
+}
+
+.player[data-mode="cover"] .meta,
+.player[data-mode="idle"] .meta {
+  text-align: center;
+}
+
+/* 置中時兩邊各留按鈕的寬度，歌名才會真的在正中間 */
+.player[data-mode="cover"] .meta {
+  grid-template-columns: 40px minmax(0, 1fr) 40px;
+}
+
+.player[data-mode="cover"] .meta-text {
+  grid-column: 2;
+}
+
+.player[data-mode="idle"] .transport {
+  display: none;
+}
+
+.player[data-mode="idle"] .cover-frame {
+  transform: scale(0.72);
+}
+
+.player[data-mode="idle"] .cover-placeholder svg {
+  animation: idle-breathe 3.2s var(--ease-in-out) infinite;
+}
+
+.player[data-mode="idle"] .artist {
+  white-space: normal;
+}
+
+@keyframes idle-breathe {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(0.96);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.04);
+  }
+}
+
+/* ----- 窄視窗：上方小封面＋歌名，中間歌詞，下方控制 ----- */
+
+@media (max-width: 760px) {
+  .player[data-mode="lyrics"] {
+    grid-template-columns: 60px minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      "cover meta"
+      "lyrics lyrics"
+      "transport transport";
+    justify-content: stretch;
+    column-gap: 14px;
+    row-gap: 14px;
+    padding: 0 20px 18px;
+  }
+
+  /* 窄視窗的封面只是一個小圖示，歌詞字級改用視窗寬度算 */
+  .player[data-mode="lyrics"] .lyric-view {
+    --line-size: calc(clamp(20px, 5.2vw + 4px, 30px) * var(--lyric-scale));
+  }
+
+  .player[data-mode="lyrics"] .now-playing {
+    display: contents;
+  }
+
+  .player[data-mode="lyrics"] .cover-frame {
+    grid-area: cover;
+    width: 60px;
+    border-radius: var(--radius-s);
+  }
+
+  .player[data-mode="lyrics"] .cover {
+    box-shadow: 0 8px 20px -6px rgb(var(--art-shadow) / 0.7);
+  }
+
+  .player[data-mode="lyrics"] .meta {
+    grid-area: meta;
+    align-self: center;
+  }
+
+  .player[data-mode="lyrics"] .title {
+    font-size: 17px;
+    -webkit-line-clamp: 1;
+  }
+
+  .player[data-mode="lyrics"] .artist {
+    font-size: 13.5px;
+  }
+
+  .player[data-mode="lyrics"] .transport {
+    grid-area: transport;
+  }
+
+  .player[data-mode="lyrics"] .status-note {
+    display: none;
+  }
+
+  .player[data-mode="lyrics"] .control {
+    --size: 46px;
+  }
+
+  .player[data-mode="lyrics"] .control-play {
+    --size: 56px;
+  }
+}
+
+/* 矮視窗：縮小間距，封面不要擠掉控制列 */
+@media (max-height: 620px) {
+  .now-playing {
+    gap: 14px;
+  }
+}

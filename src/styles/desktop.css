@@ -1,0 +1,250 @@
+/* ===== 桌面歌詞：透明視窗上的兩行字 ===== */
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: transparent !important;
+}
+
+.desk {
+  --desk-font: 34px;
+  /* 唱過部分的顏色（主視窗依封面送過來） */
+  --accent: 255 222 170;
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 34px 26px 14px;
+  font-family: var(--font-display);
+  cursor: default;
+}
+
+/* 沒鎖定時滑過：出現半透明底板，看得出視窗範圍、可以拖曳 */
+.desk-panel {
+  position: absolute;
+  inset: 4px;
+  border-radius: 18px;
+  background: rgb(16 14 13 / 0.46);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.09);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  pointer-events: none;
+}
+
+.desk:not(.locked):hover .desk-panel {
+  opacity: 1;
+}
+
+.desk:not(.locked):hover {
+  cursor: grab;
+}
+
+.desk-toolbar {
+  position: absolute;
+  top: 9px;
+  right: 12px;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.desk:not(.locked):hover .desk-toolbar,
+.desk-toolbar:focus-within {
+  opacity: 1;
+}
+
+.desk.locked .desk-toolbar {
+  display: none;
+}
+
+.desk-button {
+  display: grid;
+  place-items: center;
+  min-width: 28px;
+  height: 26px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 8px;
+  background: rgb(255 255 255 / 0.12);
+  color: rgb(255 255 255 / 0.88);
+  font: 700 12px var(--font-ui);
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.desk-button:hover {
+  background: rgb(255 255 255 / 0.24);
+}
+
+.desk-button svg {
+  width: 15px;
+  height: 15px;
+}
+
+/* 鎖定時的解鎖按鈕：游標移到視窗範圍內才浮現 */
+.desk-unlock {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  width: 30px;
+  height: 28px;
+  background: rgb(16 14 13 / 0.6);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.desk.locked.peek .desk-unlock {
+  opacity: 1;
+}
+
+.desk:not(.locked) .desk-unlock {
+  display: none;
+}
+
+/* ----- 兩行字 ----- */
+
+.desk-lines {
+  position: relative;
+  text-align: center;
+}
+
+.desk-line {
+  overflow: visible;
+  white-space: nowrap;
+}
+
+/* 主行的字體和主畫面一樣依語言（--lyric-* 由 ui/fonts.ts 寫入） */
+.desk-line.primary {
+  font-family: var(--lyric-family-zh, var(--font-display));
+  font-size: var(--desk-font);
+  font-weight: var(--lyric-weight-zh, 750);
+  line-height: 1.45;
+  letter-spacing: var(--lyric-tracking-zh, -0.005em);
+}
+
+.desk-line.primary:lang(ja) {
+  font-family: var(--lyric-family-ja, var(--font-ja));
+  font-weight: var(--lyric-weight-ja, 750);
+  letter-spacing: var(--lyric-tracking-ja, -0.005em);
+}
+
+.desk-line.primary:lang(ko) {
+  font-family: var(--lyric-family-ko, var(--font-ko));
+  font-weight: var(--lyric-weight-ko, 750);
+  letter-spacing: var(--lyric-tracking-ko, -0.005em);
+}
+
+.desk-line.primary:lang(en) {
+  font-size: calc(var(--desk-font) * var(--lyric-scale-en, 1));
+  font-family: var(--lyric-family-en, var(--font-display));
+  font-weight: var(--lyric-weight-en, 750);
+  letter-spacing: var(--lyric-tracking-en, -0.005em);
+}
+
+.desk-line.secondary {
+  min-height: 1.5em;
+  color: rgb(255 255 255 / 0.86);
+  font: 650 calc(var(--desk-font) * 0.58) / 1.5 var(--font-ui);
+  /* 和白字一樣的深色描邊 */
+  text-shadow:
+    0 0 2px rgb(0 0 0 / 0.65),
+    0 1px 3px rgb(0 0 0 / 0.55),
+    0 0 14px rgb(0 0 0 / 0.35);
+}
+
+.desk-line.secondary[data-kind="next"] {
+  color: rgb(255 255 255 / 0.6);
+}
+
+/* 卡拉 OK：底下白字、上面強調色，只露出唱過的部分（--x 由程式寫入） */
+.karaoke {
+  position: relative;
+  display: inline-block;
+  transform: scale(var(--fit, 1));
+  transform-origin: center bottom;
+}
+
+/* 還沒唱到的字暗一點，和唱過的強調色拉開差距（強調色偏淺時也分得出來） */
+.karaoke-base {
+  color: rgb(255 255 255 / 0.72);
+  text-shadow:
+    0 0 2px rgb(0 0 0 / 0.7),
+    0 1px 3px rgb(0 0 0 / 0.6),
+    0 0 18px rgb(0 0 0 / 0.35);
+}
+
+.karaoke-fill {
+  position: absolute;
+  inset: 0;
+  color: rgb(var(--accent));
+  text-shadow: 0 0 16px rgb(var(--accent) / 0.55);
+  -webkit-mask-image: linear-gradient(90deg, #000 calc(var(--x, 0px) - 6px), transparent calc(var(--x, 0px) + 6px));
+  mask-image: linear-gradient(90deg, #000 calc(var(--x, 0px) - 6px), transparent calc(var(--x, 0px) + 6px));
+  pointer-events: none;
+}
+
+/* ----- 書寫效果：還沒唱到的字看不到，唱到的字由左往右寫出來 ----- */
+
+.ink-line {
+  display: inline-block;
+  transform: scale(var(--fit, 1));
+  transform-origin: center bottom;
+}
+
+/*
+ * 每個字自己有遮罩（--p 是寫到哪裡）和落定的動作（--ink 由 0 到 1：從稍低、微微模糊的位置落定）。
+ * 四周多留空間給深色描邊和光暈，再用負邊距抵銷，不影響排版；不然描邊會被遮罩切出直直的邊。
+ */
+.ink-w {
+  --pad: 0.5em;
+  --edge: 0.4em;
+  --fill: calc(var(--pad) + var(--p, 0) * (100% - 2 * var(--pad) + var(--edge)));
+  display: inline-block;
+  padding: var(--pad);
+  margin: calc(-1 * var(--pad));
+  color: rgb(var(--accent));
+  text-shadow:
+    0 0 2px rgb(0 0 0 / 0.7),
+    0 1px 3px rgb(0 0 0 / 0.6),
+    0 0 16px rgb(var(--accent) / 0.45);
+  -webkit-mask-image: linear-gradient(90deg, #000 calc(var(--fill) - var(--edge)), transparent var(--fill));
+  mask-image: linear-gradient(90deg, #000 calc(var(--fill) - var(--edge)), transparent var(--fill));
+  transform: translate3d(0, calc((1 - var(--ink, 0)) * 0.14em), 0);
+  filter: blur(calc((1 - var(--ink, 0)) * 0.06em));
+}
+
+/* 寫完、墨跡也落定了：拿掉遮罩和濾鏡，不必每個影格重畫 */
+.ink-w.dry {
+  -webkit-mask-image: none;
+  mask-image: none;
+  transform: none;
+  filter: none;
+}
+
+/* 第二行（羅馬拼音、翻譯）：和亮起效果的第二行一樣是白字 */
+.ink-line.sub .ink-w {
+  color: rgb(255 255 255 / 0.86);
+  text-shadow:
+    0 0 2px rgb(0 0 0 / 0.65),
+    0 1px 3px rgb(0 0 0 / 0.55),
+    0 0 14px rgb(0 0 0 / 0.35);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ink-w {
+    transform: none;
+    filter: none;
+  }
+}
+
+/* 換行時寫好的上一行：複製一份蓋在原處，往上飄、模糊、淡出（動畫由程式加上） */
+.desk-ghost {
+  position: absolute;
+  inset: 0;
+  font-size: var(--desk-font);
+  pointer-events: none;
+}

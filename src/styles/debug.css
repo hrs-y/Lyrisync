@@ -1,0 +1,109 @@
+/* ===== 除錯面板：開發用，從右側浮出 ===== */
+
+.debug-drawer {
+  position: fixed;
+  top: 52px;
+  right: 10px;
+  bottom: 10px;
+  z-index: var(--z-drawer);
+  display: flex;
+  flex-direction: column;
+  width: min(400px, calc(100vw - 20px));
+  overflow: hidden;
+  border-radius: var(--radius-l);
+  background: rgb(18 17 16 / 0.86);
+  backdrop-filter: blur(28px) saturate(1.3);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.08),
+    0 20px 50px rgb(0 0 0 / 0.45);
+  font-size: 12px;
+  user-select: text;
+}
+
+.debug-fields {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  margin: 0;
+  padding: 14px 14px 12px;
+}
+
+.debug-fields dt {
+  color: var(--text-3);
+}
+
+.debug-fields dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+
+.debug-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 14px 12px;
+}
+
+.debug-actions button {
+  padding: 4px 10px;
+  border: 0;
+  border-radius: 99px;
+  background: var(--fill-1);
+  font-size: 12px;
+  transition: background-color 0.15s;
+}
+
+.debug-actions button:hover {
+  background: var(--fill-2);
+}
+
+.debug-log-header {
+  padding: 8px 14px 4px;
+  border-top: 1px solid var(--hairline);
+  color: var(--text-3);
+}
+
+.debug-log {
+  flex: 1;
+  margin: 0;
+  padding: 4px 14px 14px;
+  overflow-y: auto;
+  list-style: none;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.debug-log li {
+  padding: 2px 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.log-position {
+  color: var(--text-3);
+}
+
+.log-track {
+  color: #8fc8f2;
+}
+
+.log-hold {
+  color: #f0c674;
+}
+
+.log-command {
+  color: #c4b3f0;
+}
+
+.log-lyrics {
+  color: #9bd99b;
+}
+
+.log-error {
+  color: #ff8a80;
+}
+
+.log-spotify {
+  color: #8fdcb0;
+}

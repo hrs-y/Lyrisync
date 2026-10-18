@@ -1,0 +1,672 @@
+/* ===== 歌詞 ===== */
+
+.lyric-view {
+  /* 字級跟著封面一起縮放（封面又跟著視窗大小），最大化時歌詞也會變大 */
+  --line-size: calc(clamp(22px, calc(var(--cover, 360px) * 0.09), 66px) * var(--lyric-scale));
+  position: relative;
+  overflow: hidden;
+  /* 上下邊緣淡出，歌詞像是從遠處浮現 */
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 13%, #000 80%, transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 13%, #000 80%, transparent 100%);
+}
+
+.lyric-track {
+  position: relative;
+  padding: 0 0.5em 0 0.45em;
+}
+
+/* 低品質：整塊一起滑動 */
+.lyric-view:not(.springs) .lyric-track {
+  transition: transform 0.65s var(--ease-out);
+}
+
+.lyric-track.instant {
+  transition: none !important;
+}
+
+.item {
+  position: relative;
+}
+
+.lyric-view.springs .item {
+  will-change: transform;
+}
+
+/* 離目前那一行越遠越模糊（--blur 由程式依距離寫入） */
+.lyric-view.depth-blur .item {
+  filter: blur(var(--blur, 0px));
+  transition: filter 0.55s var(--ease-out);
+}
+
+/* ----- 一行歌詞 ----- */
+
+/* 字型、字重、字距依這一行的語言（--lyric-* 由 ui/fonts.ts 依設定寫入） */
+.line {
+  --sung: var(--dim-alpha);
+  padding: 0.3em 0;
+  font: var(--lyric-weight-zh, 700) var(--line-size) / 1.26 var(--lyric-family-zh, var(--font-display));
+  letter-spacing: var(--lyric-tracking-zh, -0.012em);
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
+  cursor: pointer;
+  transition: --sung 0.6s ease;
+}
+
+.line:lang(ja) {
+  font-family: var(--lyric-family-ja, var(--font-ja));
+  font-weight: var(--lyric-weight-ja, 700);
+  letter-spacing: var(--lyric-tracking-ja, -0.012em);
+}
+
+.line:lang(ko) {
+  font-family: var(--lyric-family-ko, var(--font-ko));
+  font-weight: var(--lyric-weight-ko, 700);
+  letter-spacing: var(--lyric-tracking-ko, -0.012em);
+  word-break: keep-all;
+}
+
+.line:lang(en) {
+  font-family: var(--lyric-family-en, var(--font-display));
+  font-weight: var(--lyric-weight-en, 700);
+  letter-spacing: var(--lyric-tracking-en, -0.012em);
+}
+
+/* 小寫字母比較矮的字體（Garamond）放大一點，和中文歌詞看起來一樣大；翻譯和羅馬拼音不受影響 */
+.line:lang(en) .main {
+  font-size: calc(var(--lyric-scale-en, 1) * 1em);
+}
+
+/* 亮起快、熄滅慢 */
+.line.active {
+  --sung: 1;
+  transition-duration: 0.22s;
+}
+
+/* 滑過時的底色：負邊距抵銷內距，文字位置不動 */
+.line-inner {
+  margin: -0.18em -0.42em;
+  padding: 0.18em 0.42em;
+  border-radius: var(--radius-m);
+  transition: background-color 0.25s;
+}
+
+.line:hover .line-inner {
+  background: var(--fill-1);
+}
+
+.lyric-view.browsing .line:not(.active) {
+  --sung: 0.46;
+}
+
+.line.duet {
+  text-align: right;
+}
+
+/* 只有逐行時間：整行一起亮 */
+.line.no-words .main,
+.line.no-words .bg {
+  color: rgb(255 255 255 / var(--sung));
+}
+
+/* ----- 每個字 ----- */
+
+/* inline-block 才能位移和遮罩；左右多留空間給發光，再用負邊距抵銷，不影響排版 */
+.w {
+  --pad: 0.2em;
+  --edge: 0.45em;
+  display: inline-block;
+  padding: 0.2em var(--pad);
+  margin: -0.2em calc(-1 * var(--pad));
+  white-space: normal;
+  color: rgb(255 255 255 / var(--sung));
+  /* 這一行唱完後，浮起的字平順地落回原位 */
+  transition: transform 0.7s var(--ease-out);
+}
+
+/* 英文單字的幾個音節黏在一起，不從中間換行 */
+.run {
+  white-space: nowrap;
+}
+
+/*
+ * 唱到的字緩緩上浮（--lift 由程式用緩起緩停的曲線寫入）。
+ * 亮著那一行的每個字各自放到 GPU 圖層，位移可以停在小數像素；
+ * 不然 Windows 上文字的垂直位置會對齊整數像素，兩三個像素的上浮就會一格一格地跳。
+ */
+.lyric-view.word-lift .line.active .w {
+  transform: translate3d(0, calc(var(--lift) * -0.06em), 0);
+  transition: none;
+  will-change: transform;
+}
+
+.lyric-view.word-lift .line.active .w.long {
+  transform: translate3d(0, calc(var(--lift) * -0.06em), 0) scale(calc(1 + var(--glow) * 0.035));
+}
+
+/* 亮著（或正在淡出）的行：唱過的部分用 --sung 的亮度，沒唱到的維持暗色，交界是柔和的漸層 */
+.line.masked .w {
+  --fill: calc(var(--pad) + var(--p) * (100% - 2 * var(--pad) + var(--edge)));
+  color: #fff;
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    rgb(0 0 0 / var(--sung)) calc(var(--fill) - var(--edge)),
+    rgb(0 0 0 / var(--dim-alpha)) var(--fill)
+  );
+  mask-image: linear-gradient(
+    90deg,
+    rgb(0 0 0 / var(--sung)) calc(var(--fill) - var(--edge)),
+    rgb(0 0 0 / var(--dim-alpha)) var(--fill)
+  );
+}
+
+/* 長音：唱到一半最亮 */
+.lyric-view.glow .line.masked .w.long {
+  text-shadow: 0 0 calc(var(--glow) * 0.38em) rgb(255 255 255 / calc(var(--glow) * 0.62));
+}
+
+/* 長音逐字母浮起：一道波從第一個字母走到最後一個（--bump 由程式寫入），唱完後落回原位 */
+.ch {
+  display: inline-block;
+  transition: transform 0.6s var(--ease-out);
+}
+
+.lyric-view.word-lift .line.active .ch {
+  transform: translate3d(0, calc(var(--bump) * -0.07em), 0) scale(calc(1 + var(--bump) * 0.06));
+  transition: none;
+  will-change: transform;
+}
+
+/* ----- 羅馬拼音：主歌詞正下方，字小一點；有逐字時間時一樣跟著歌聲填色 ----- */
+
+.line .roma {
+  margin-top: 0.1em;
+  font: 650 0.5em / 1.35 var(--font-ui);
+  letter-spacing: 0.01em;
+}
+
+.line .roma.plain {
+  color: rgb(255 255 255 / calc(var(--sung) * 0.85));
+}
+
+.lyric-view.hide-romanization .roma {
+  display: none;
+}
+
+/* ----- 背景人聲、翻譯 ----- */
+
+.line .bg {
+  margin-top: 0.12em;
+  font-size: 0.6em;
+}
+
+.line .sub {
+  margin-top: 0.22em;
+  color: rgb(255 255 255 / calc(var(--sung) * 0.72));
+  font: 600 0.52em / 1.4 var(--font-ui);
+  letter-spacing: 0;
+}
+
+.lyric-view.hide-translation .sub {
+  display: none;
+}
+
+/* ----- 書寫效果：唱到才一個字一個字寫出來 ----- */
+
+/* 還沒唱到的行還沒寫，看不到；手動捲動時淡淡地顯示，方便找到想跳去的行 */
+.lyric-view.writing .line.unwritten {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.lyric-view.writing:not(.browsing) .line.unwritten {
+  pointer-events: none;
+}
+
+.lyric-view.writing.browsing .line.unwritten {
+  opacity: 0.2;
+}
+
+/* 唱到的字由左往右寫出來：還沒寫到的部分完全透明（亮起效果是半透明） */
+.lyric-view.writing .line.masked .w {
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    rgb(0 0 0 / var(--sung)) calc(var(--fill) - var(--edge)),
+    transparent var(--fill)
+  );
+  mask-image: linear-gradient(
+    90deg,
+    rgb(0 0 0 / var(--sung)) calc(var(--fill) - var(--edge)),
+    transparent var(--fill)
+  );
+}
+
+/* 剛寫下的字像墨跡還沒乾：從微微模糊、稍低的位置落定（--ink 由程式寫入），接著和平常一樣緩緩上浮 */
+.lyric-view.writing.word-lift .line.active .w {
+  transform: translate3d(0, calc((1 - var(--ink, 1)) * 0.14em - var(--lift) * 0.06em), 0);
+  filter: blur(calc((1 - var(--ink, 1)) * 0.06em));
+}
+
+.lyric-view.writing.word-lift .line.active .w.long {
+  transform: translate3d(0, calc((1 - var(--ink, 1)) * 0.14em - var(--lift) * 0.06em), 0)
+    scale(calc(1 + var(--glow) * 0.035));
+}
+
+/* 沒有逐字時間的翻譯、羅馬拼音、背景人聲：開唱後由左往右寫出來（--write-ms 依這一行的長度） */
+.lyric-view.writing .line.active .sub,
+.lyric-view.writing .line.active .roma.plain,
+.lyric-view.writing .line.active .bg.plain {
+  -webkit-mask-image: linear-gradient(90deg, #000 40%, transparent 60%);
+  mask-image: linear-gradient(90deg, #000 40%, transparent 60%);
+  -webkit-mask-size: 250% 100%;
+  mask-size: 250% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  animation: write-in var(--write-ms, 1.2s) linear both;
+}
+
+@keyframes write-in {
+  from {
+    -webkit-mask-position: 100% 0;
+    mask-position: 100% 0;
+  }
+  to {
+    -webkit-mask-position: 0 0;
+    mask-position: 0 0;
+  }
+}
+
+/* ----- 間奏點點 ----- */
+
+.interlude {
+  display: flex;
+  align-items: center;
+  height: calc(var(--line-size) * 1.15);
+  padding-left: 0.08em;
+}
+
+.dots {
+  display: flex;
+  gap: calc(var(--line-size) * 0.26);
+  opacity: 0;
+  transform: scale(0.4);
+  transform-origin: left center;
+  transition:
+    opacity 0.35s ease,
+    transform 0.55s var(--ease-spring);
+}
+
+.interlude.active .dots {
+  opacity: 1;
+  transform: scale(1);
+  scale: calc(0.9 + var(--breath, 0.5) * 0.16);
+}
+
+.dot {
+  display: block;
+  width: calc(var(--line-size) * 0.3);
+  height: calc(var(--line-size) * 0.3);
+  border-radius: 50%;
+  background: #fff;
+  opacity: calc(0.26 + var(--fill, 0) * 0.74);
+  scale: calc(0.8 + var(--fill, 0) * 0.2);
+}
+
+/* ----- 最後一行之後：歌詞來源、切換版本 ----- */
+
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.2em 0.8em;
+  padding: 1.6em 0 0.6em;
+  color: var(--text-3);
+  font: 600 max(12.5px, calc(var(--line-size) * 0.32)) / 1.5 var(--font-ui);
+  cursor: default;
+}
+
+.footer .credit-switch {
+  padding: 0;
+  color: var(--text-2);
+  font-size: inherit;
+}
+
+/* ----- 載入中、說明、純音樂 ----- */
+
+.lyric-status {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: calc(var(--line-size) * 0.55);
+  padding: 0 0.45em;
+  font-size: var(--line-size);
+  pointer-events: none;
+}
+
+.lyric-status:empty {
+  display: none;
+}
+
+/* 骨架：和歌詞同樣形狀的光帶 */
+.skeleton-line {
+  height: 0.62em;
+  border-radius: 10px;
+  background: linear-gradient(
+    100deg,
+    rgb(255 255 255 / 0.06) 20%,
+    rgb(255 255 255 / 0.14) 40%,
+    rgb(255 255 255 / 0.06) 60%
+  );
+  background-size: 260% 100%;
+  animation: shimmer 1.7s var(--ease-in-out) infinite;
+}
+
+.skeleton-line:nth-child(2) {
+  animation-delay: 0.08s;
+}
+
+.skeleton-line:nth-child(3) {
+  animation-delay: 0.16s;
+}
+
+.skeleton-line:nth-child(4) {
+  animation-delay: 0.24s;
+}
+
+.skeleton-line:nth-child(5) {
+  animation-delay: 0.32s;
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -60% 0;
+  }
+}
+
+.lyric-message {
+  color: var(--text-2);
+  font: 650 0.6em / 1.4 var(--font-display);
+}
+
+.instrumental-dots {
+  display: flex;
+  gap: 0.24em;
+}
+
+.instrumental-dots .dot {
+  width: 0.3em;
+  height: 0.3em;
+  opacity: 1;
+  scale: 1;
+  animation: breathe 1.8s var(--ease-in-out) infinite;
+}
+
+.instrumental-dots .dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.instrumental-dots .dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+/* ----- 沒有時間軸的歌詞：一般捲動 ----- */
+
+.lyric-view[data-state="unsynced"] {
+  overflow-y: auto;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 6%, #000 90%, transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 6%, #000 90%, transparent 100%);
+}
+
+.lyric-view[data-state="unsynced"] .lyric-track {
+  padding-top: 10vh;
+  padding-bottom: 18vh;
+}
+
+.lyric-view[data-state="unsynced"] .line {
+  --sung: 0.9;
+  padding: 0.22em 0;
+  font-size: calc(var(--line-size) * 0.7);
+  cursor: default;
+}
+
+.lyric-view[data-state="unsynced"] .line:hover .line-inner {
+  background: none;
+}
+
+/* ----- 歌詞欄右上角的小工具列：翻譯、重新搜尋 ----- */
+
+.lyrics-toolbar {
+  position: absolute;
+  top: 2px;
+  right: 0;
+  z-index: 3;
+  display: flex;
+  gap: 8px;
+  opacity: 0.55;
+  transition: opacity 0.3s;
+}
+
+.lyrics-panel:hover .lyrics-toolbar,
+.lyrics-toolbar:focus-within {
+  opacity: 1;
+}
+
+/* 半透明的圓形按鈕；按下的切換鈕（翻譯開著）是白底深色字 */
+.round-button {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 0.1);
+  backdrop-filter: blur(14px) saturate(1.4);
+  color: var(--text-2);
+  font-size: 13px;
+  font-weight: 700;
+  transition:
+    background-color 0.2s,
+    color 0.2s,
+    transform 0.25s var(--ease-spring);
+}
+
+.round-button:hover {
+  background: rgb(255 255 255 / 0.18);
+  color: var(--text);
+}
+
+.round-button:active {
+  transform: scale(0.92);
+}
+
+.round-button[aria-pressed="true"] {
+  background: rgb(255 255 255 / 0.88);
+  color: #161413;
+}
+
+.round-button svg {
+  width: 17px;
+  height: 17px;
+}
+
+/* 搜尋中：圖示持續旋轉 */
+.refetch-button.busy svg {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 760px) {
+  .lyrics-toolbar {
+    top: -2px;
+  }
+}
+
+/* ----- 待播清單：和歌詞共用右欄，按下工具列的清單按鈕切換 ----- */
+
+.lyrics-panel.queue-open #lyrics {
+  visibility: hidden;
+}
+
+.queue-view {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  padding-top: 4px;
+  animation: queue-in 0.42s var(--ease-out) both;
+  user-select: none;
+}
+
+@keyframes queue-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+/* 右邊留出工具列按鈕的位置 */
+.queue-title {
+  flex: none;
+  margin: 0 48px 14px 0;
+  font: 700 calc(var(--line-size, 32px) * 0.62) / 1.2 var(--font-display);
+  letter-spacing: -0.01em;
+}
+
+/* 清單捲動區：捲動條平常看不見，滑過清單才淡淡出現；底部淡出 */
+.queue-scroll {
+  flex: 1;
+  min-height: 0;
+  padding: 0 4px 32px 0;
+  overflow-y: auto;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0, #000 88%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0, #000 88%, transparent 100%);
+}
+
+.queue-scroll::-webkit-scrollbar-thumb {
+  background: transparent;
+  transition: background-color 0.2s;
+}
+
+.queue-scroll:hover::-webkit-scrollbar-thumb {
+  background: rgb(255 255 255 / 0.16) padding-box;
+}
+
+.queue-status {
+  color: var(--text-3);
+  font-size: 14px;
+}
+
+.queue-list {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.queue-item {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 7px 10px 7px 7px;
+  border-radius: var(--radius-m);
+  animation: queue-item-in 0.5s var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * 35ms);
+  transition: background-color 0.2s;
+}
+
+.queue-item:hover {
+  background: var(--fill-1);
+}
+
+@keyframes queue-item-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+.queue-art {
+  width: 48px;
+  height: 48px;
+  overflow: hidden;
+  border-radius: 7px;
+  background: rgb(255 255 255 / 0.08);
+  box-shadow: 0 4px 12px -4px rgb(0 0 0 / 0.45);
+}
+
+.queue-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.queue-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.queue-name,
+.queue-artist {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.queue-name {
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.queue-artist {
+  color: var(--text-2);
+  font-size: 13px;
+}
+
+.queue-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.queue-badge {
+  padding: 2px 8px;
+  border-radius: 99px;
+  background: rgb(255 255 255 / 0.1);
+  color: var(--text-2);
+  font-size: 11.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.queue-duration {
+  min-width: 34px;
+  color: var(--text-3);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
