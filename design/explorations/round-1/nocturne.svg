@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="noc-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#241F4A"/>
+      <stop offset="0.55" stop-color="#47295C"/>
+      <stop offset="1" stop-color="#8E4459"/>
+    </linearGradient>
+    <radialGradient id="noc-glow" cx="0.38" cy="0.42" r="0.48">
+      <stop offset="0" stop-color="#FFD9A0" stop-opacity="0.32"/>
+      <stop offset="1" stop-color="#FFD9A0" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="noc-moon" x1="0.2" y1="0.1" x2="0.8" y2="0.9">
+      <stop offset="0" stop-color="#FFF6E2"/>
+      <stop offset="1" stop-color="#F2C88C"/>
+    </linearGradient>
+    <mask id="noc-crescent">
+      <rect width="1024" height="1024" fill="#000"/>
+      <circle cx="400" cy="420" r="230" fill="#fff"/>
+      <circle cx="502" cy="346" r="204" fill="#000"/>
+    </mask>
+  </defs>
+  <rect x="32" y="32" width="960" height="960" rx="220" fill="url(#noc-bg)"/>
+  <rect x="32" y="32" width="960" height="960" rx="220" fill="url(#noc-glow)"/>
+  <g transform="translate(-6 58)">
+    <rect width="1024" height="1024" fill="url(#noc-moon)" mask="url(#noc-crescent)"/>
+    <rect x="606" y="560" width="262" height="46" rx="23" fill="#FFF3DA"/>
+    <rect x="606" y="642" width="176" height="46" rx="23" fill="#FFF3DA" opacity="0.42"/>
+    <circle cx="742" cy="236" r="13" fill="#FFF3DA" opacity="0.9"/>
+    <circle cx="822" cy="330" r="8" fill="#FFF3DA" opacity="0.6"/>
+  </g>
+</svg>

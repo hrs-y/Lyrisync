@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="lum-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3B1E3F"/>
+      <stop offset="0.5" stop-color="#7B3149"/>
+      <stop offset="1" stop-color="#C66A3E"/>
+    </linearGradient>
+    <radialGradient id="lum-glow" cx="0.3" cy="0.8" r="0.6">
+      <stop offset="0" stop-color="#F7A85C" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#F7A85C" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="lum-line" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="0.6" stop-color="#FFFFFF"/>
+      <stop offset="0.74" stop-color="#FFFFFF" stop-opacity="0.32"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0.32"/>
+    </linearGradient>
+    <filter id="lum-blur" x="-20%" y="-80%" width="140%" height="260%">
+      <feGaussianBlur stdDeviation="22"/>
+    </filter>
+  </defs>
+  <rect x="32" y="32" width="960" height="960" rx="220" fill="url(#lum-bg)"/>
+  <rect x="32" y="32" width="960" height="960" rx="220" fill="url(#lum-glow)"/>
+  <g transform="translate(0 22)">
+    <rect x="240" y="318" width="370" height="62" rx="31" fill="#FFFFFF" opacity="0.3"/>
+    <rect x="240" y="440" width="350" height="88" rx="44" fill="#FFE2B8" opacity="0.7" filter="url(#lum-blur)"/>
+    <rect x="240" y="440" width="544" height="88" rx="44" fill="url(#lum-line)"/>
+    <rect x="240" y="588" width="452" height="62" rx="31" fill="#FFFFFF" opacity="0.3"/>
+    <path d="M594 352 l14 38 38 14 -38 14 -14 38 -14 -38 -38 -14 38 -14 z" fill="#FFF1D6"/>
+  </g>
+</svg>

@@ -2,7 +2,7 @@
 
 <img src="design/logo.svg" width="96" alt="Lyrisync 圖示" />
 
-[下載最新版](https://github.com/hrs-y/Lyrisync/releases/latest)・[發佈網頁](/)・MIT 授權
+[下載最新版](https://github.com/hrs-y/Lyrisync/releases/latest)・[發佈網頁](https://hrs-y.github.io/Lyrisync/)・MIT 授權
 
 為 Spotify 補齊缺少的歌詞，並提供 Apple Music 式顯示效果的 Windows 桌面程式（Tauri 2 + TypeScript）。
 

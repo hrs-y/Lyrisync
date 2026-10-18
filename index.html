@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Lyrisync：為 Spotify 補齊歌詞，以 Apple Music 般的效果同步顯示" />
+    <title>Lyrisync</title>
+    <script type="module" src="/src/main.ts"></script>
+  </head>
+
+  <body>
+    <div class="app">
+      <div class="backdrop" aria-hidden="true">
+        <div class="bg-scrim"></div>
+        <div class="bg-vignette"></div>
+        <div class="bg-grain"></div>
+      </div>
+
+      <header class="titlebar">
+        <div class="drag-region" data-tauri-drag-region></div>
+        <div class="title-actions">
+          <button class="icon-button desktop-lyrics-button" type="button" aria-pressed="false" data-i18n-label="titlebar.desktopLyrics" data-i18n-title="titlebar.desktopLyricsOn"></button>
+          <button class="icon-button fullscreen-button" type="button" data-i18n-label="titlebar.fullscreen"></button>
+          <button class="icon-button settings-button" type="button" data-i18n-label="settings.title" data-i18n-title="titlebar.settings"></button>
+        </div>
+        <div class="window-controls">
+          <button class="window-button window-minimize" type="button" data-i18n-label="titlebar.minimize"></button>
+          <button class="window-button window-maximize" type="button" data-i18n-label="titlebar.maximize"></button>
+          <button class="window-button window-close" type="button" data-i18n-label="titlebar.close"></button>
+        </div>
+      </header>
+
+      <main class="player">
+        <section class="now-playing" data-i18n-label="player.nowPlaying">
+          <div class="cover-frame">
+            <div class="cover empty">
+              <div class="cover-placeholder"></div>
+            </div>
+          </div>
+          <div class="meta">
+            <div class="meta-text">
+              <h1 class="title" data-i18n="app.waiting"></h1>
+              <p class="artist"></p>
+            </div>
+            <button class="like-button" type="button" aria-pressed="false" data-i18n-label="player.like" hidden></button>
+          </div>
+          <div class="transport">
+            <div
+              class="progress"
+              role="slider"
+              tabindex="0"
+              data-i18n-label="player.progress"
+              aria-valuemin="0"
+              aria-valuemax="0"
+              aria-valuenow="0"
+            >
+              <div class="progress-track"><div class="progress-fill"></div></div>
+              <div class="progress-thumb"></div>
+            </div>
+            <div class="times"><span class="time-elapsed">0:00</span><span class="time-remaining"></span></div>
+            <div class="controls">
+              <button class="control control-previous" type="button" data-i18n-label="player.previous"></button>
+              <button class="control control-play" type="button" data-i18n-label="player.playPause"></button>
+              <button class="control control-next" type="button" data-i18n-label="player.next"></button>
+            </div>
+          </div>
+          <p class="status-note" hidden></p>
+        </section>
+
+        <section class="lyrics-panel" data-i18n-label="lyrics.panel">
+          <div class="lyrics-toolbar">
+            <button
+              class="round-button translation-button"
+              type="button"
+              aria-pressed="true"
+              data-i18n="lyrics.translationButton"
+              data-i18n-label="lyrics.translation"
+              data-i18n-title="lyrics.translation"
+              hidden
+            ></button>
+            <button
+              class="round-button romanization-button"
+              type="button"
+              aria-pressed="true"
+              data-i18n="lyrics.romanizationButton"
+              data-i18n-label="lyrics.romanization"
+              data-i18n-title="lyrics.romanization"
+              hidden
+            ></button>
+            <button class="round-button refetch-button" type="button" data-i18n-label="lyrics.refetch" data-i18n-title="lyrics.refetch" hidden></button>
+            <button class="round-button queue-button" type="button" aria-pressed="false" data-i18n-label="lyrics.queue" data-i18n-title="lyrics.queue" hidden></button>
+          </div>
+          <div id="lyrics"></div>
+          <div class="queue-view" hidden></div>
+        </section>
+      </main>
+
+      <div class="settings" hidden></div>
+      <aside class="debug-drawer" aria-label="除錯面板" hidden></aside>
+    </div>
+  </body>
+</html>

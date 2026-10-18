@@ -1,0 +1,60 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Lyrisync",
+  "version": "0.1.0",
+  "identifier": "com.lyricsapp.desktop",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Lyrisync",
+        "width": 1120,
+        "height": 740,
+        "minWidth": 420,
+        "minHeight": 520,
+        "center": true,
+        "decorations": false,
+        "shadow": true,
+        "backgroundColor": "#141211"
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": [
+      "nsis"
+    ],
+    "publisher": "Harrison",
+    "copyright": "© 2026 Harrison",
+    "category": "Music",
+    "shortDescription": "為 Spotify 補全歌詞，並以優雅效果呈現",
+    "longDescription": "Lyrisync 讀取 Windows 正在播放的 Spotify 歌曲，從多個來源找出逐字同步的歌詞，以亮起或書寫效果、隨封面流動的背景與桌面歌詞呈現。",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser",
+        "languages": [
+          "TradChinese",
+          "English",
+          "Japanese"
+        ],
+        "displayLanguageSelector": true,
+        "installerIcon": "icons/icon.ico"
+      }
+    }
+  }
+}

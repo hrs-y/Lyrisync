@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lyrisync 桌面歌詞</title>
+    <script type="module" src="/src/desktop/main.ts"></script>
+  </head>
+
+  <body>
+    <div class="desk" id="desk">
+      <div class="desk-panel" aria-hidden="true"></div>
+      <div class="desk-toolbar">
+        <button class="desk-button desk-smaller" type="button" data-i18n-label="desktop.smaller" data-i18n-title="desktop.smaller">A−</button>
+        <button class="desk-button desk-larger" type="button" data-i18n-label="desktop.larger" data-i18n-title="desktop.larger">A+</button>
+        <button class="desk-button desk-lock" type="button" data-i18n-label="desktop.lock" data-i18n-title="desktop.lock"></button>
+        <button class="desk-button desk-close" type="button" data-i18n-label="desktop.close" data-i18n-title="desktop.close"></button>
+      </div>
+      <button class="desk-button desk-unlock" type="button" data-i18n-label="desktop.unlock" data-i18n-title="desktop.unlock"></button>
+      <div class="desk-lines">
+        <div class="desk-line primary"></div>
+        <div class="desk-line secondary"></div>
+      </div>
+    </div>
+  </body>
+</html>
